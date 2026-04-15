@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lernapp – Kapazitiver Blindwiderstand</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root{
+      --bg:#eef3f6; --surface:#fff; --text:#0f172a; --muted:#51627d; --border:#d9e3ea;
+      --primary:#164e63; --primary-soft:#edf7fa; --shadow:0 8px 24px rgba(15,23,42,.08);
+      --success-bg:#ecfdf5; --success-border:#86efac; --error-bg:#fef2f2; --error-border:#fca5a5;
+    }
+    html,body{margin:0;min-height:100%;font-family:Inter,system-ui,sans-serif;background:linear-gradient(180deg,#e9eff3 0%,#f5f8fa 100%);color:var(--text)}
+    body{line-height:1.6}
+    button,input,select{font:inherit}
+    .page{padding:24px}.shell{max-width:1180px;margin:0 auto}
+    .hero{display:grid;grid-template-columns:1.8fr 280px;gap:20px;padding:32px;background:linear-gradient(135deg,#e6f6fa 0%,#edf7ff 52%,#f4fbff 100%);border:1px solid var(--border);border-radius:34px;box-shadow:var(--shadow)}
+    .hero h1{margin:0;font-size:clamp(2rem,4vw,3rem);line-height:1.1}
+    .hero p{margin:14px 0 0;max-width:68ch;color:var(--muted);line-height:2}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:24px;box-shadow:var(--shadow)}
+    .card h2{margin:0 0 18px;font-size:1.35rem}
+    .card p{margin:0 0 16px;color:#334155;line-height:2}
+    .card p:last-child{margin-bottom:0}
+    .score-label{color:var(--muted);font-size:.92rem}.score-value{margin-top:6px;font-size:2.2rem;font-weight:800}.score-note{margin-top:8px;color:var(--muted)}
+    .tabs{margin:22px 0;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:8px;background:rgba(255,255,255,.75);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow)}
+    .tab-btn{border:0;background:transparent;color:var(--muted);padding:14px 18px;border-radius:14px;font-weight:700;cursor:pointer}
+    .tab-btn.active{background:#fff;color:var(--text);box-shadow:0 4px 14px rgba(15,23,42,.07)}
+    .hidden{display:none !important}
+    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+    .stack{display:grid;gap:18px}
+    .airy{display:grid;gap:14px;max-width:70ch}.airy p{margin:0;line-height:2.1}
+    .button-row{display:flex;flex-wrap:wrap;gap:12px}
+    .btn-primary,.btn-secondary{border-radius:16px;padding:14px 20px;font-weight:700;cursor:pointer;border:1px solid transparent}
+    .btn-primary{background:var(--primary);color:#fff}.btn-secondary{background:#fff;border-color:var(--border);color:var(--text)}
+    .btn-primary:disabled{opacity:.55;cursor:not-allowed}
+    .formula-box{display:inline-flex;gap:14px;align-items:center;padding:18px;border-radius:18px;background:#f1f5f9;font-weight:800;font-size:1.15rem}
+    .fraction{display:inline-flex;flex-direction:column;align-items:center;min-width:110px;line-height:1.2}
+    .fraction .top{padding-bottom:6px}.fraction .bar{width:100%;max-width:110px;border-top:2px solid #0f172a;margin-bottom:6px}
+    .formula-legend,.formula-grid{display:grid;gap:10px;margin-top:16px}
+    .formula-item{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:14px 16px;border:1px solid var(--border);border-radius:18px;background:#f8fbfd}
+    .slider-wrap{display:grid;gap:10px;max-width:440px}
+    .readout{display:inline-flex;gap:10px;align-items:center;width:fit-content;padding:12px 14px;border:1px solid var(--border);border-radius:16px;background:#f1f5f9}
+    .chart-frame{padding:16px;border:1px solid var(--border);border-radius:20px;background:#fcfeff;overflow-x:auto}
+    .chart-caption{margin:10px 0 0;color:var(--muted);max-width:70ch;line-height:1.8}
+    .conversion-controls{display:grid;grid-template-columns:1fr auto 1fr auto;gap:12px;align-items:center}
+    .field,.select,.answer-input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:14px;background:#fff;color:var(--text)}
+    .field:focus,.select:focus,.answer-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(22,78,99,.08)}
+    .result-box{padding:14px 16px;border:1px solid var(--border);border-radius:16px;background:#f8fbfd;line-height:1.9}
+    .feedback-success{background:var(--success-bg);border-color:var(--success-border)}
+    .feedback-error{background:var(--error-bg);border-color:var(--error-border)}
+    .progress-top{display:flex;justify-content:space-between;gap:16px;color:var(--muted);font-size:.95rem}
+    .progress-bar{width:100%;height:12px;background:#e5edf2;border-radius:999px;overflow:hidden}
+    .progress-fill{height:100%;background:linear-gradient(90deg,#0891b2 0%,#2563eb 100%);border-radius:999px}
+    .badge-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+    .badge{display:inline-flex;align-items:center;padding:7px 12px;border-radius:999px;background:#dff4fb;color:#0f3b4a;font-size:.88rem;font-weight:700}
+    .badge.secondary{background:#eef2f7;color:#334155}
+    .question-title{margin:0 0 6px;line-height:1.55;max-width:42ch}
+    .options{display:grid;gap:14px;max-width:780px}
+    .option{width:100%;text-align:left;border:1px solid var(--border);border-radius:20px;padding:18px;background:linear-gradient(180deg,#fff 0%,#f9fbfc 100%);color:#243244;line-height:1.8;box-shadow:0 3px 10px rgba(15,23,42,.04);cursor:pointer;transition:transform .14s,border-color .14s,box-shadow .14s,background .14s}
+    .option:hover{transform:translateY(-1px);border-color:#b9cad6;box-shadow:0 6px 14px rgba(15,23,42,.06);background:linear-gradient(180deg,#fff 0%,#f4f8fa 100%)}
+    .option.active{border-color:var(--primary);background:var(--primary-soft);box-shadow:0 0 0 3px rgba(22,78,99,.08)}
+    .option.correct{border-color:#16a34a;background:var(--success-bg)}
+    .option.wrong{border-color:#dc2626;background:var(--error-bg)}
+    .answer-wrap{display:grid;gap:10px;max-width:560px;padding:18px;border:1px solid var(--border);border-radius:20px;background:linear-gradient(180deg,#fff 0%,#f9fbfc 100%);box-shadow:0 3px 10px rgba(15,23,42,.04)}
+    .answer-input{min-height:52px}
+    .feedback{max-width:760px;padding:16px;border:1px solid var(--border);border-radius:18px;line-height:1.95}
+    @media (max-width:980px){.hero,.grid-3,.grid-2{grid-template-columns:1fr}.tabs{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:760px){.conversion-controls{grid-template-columns:1fr}}
+    @media (max-width:640px){.page{padding:14px}.hero,.card{padding:20px}.button-row{flex-direction:column}.btn-primary,.btn-secondary{width:100%}.progress-top{flex-direction:column;gap:4px}}
+  </style>
+</head>
+<body>
+<div class="page"><div class="shell">
+<header class="hero">
+  <div><h1>Lernapp: Kapazitiver Blindwiderstand</h1><p>Diese App unterstützt beim Verstehen, Berechnen, Deuten und Erläutern des kapazitiven Blindwiderstands. Sie verbindet fachliche Grundlagen mit klausurnahen Aufgaben und einem physikalisch-technischen Anwendungskontext.</p></div>
+  <div class="card"><div class="score-label">Aktueller Stand</div><div class="score-value" id="scoreValue">0 / 0</div><div class="score-note" id="scoreNote">Lernen und Quiz können miteinander verbunden werden.</div></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="start">Start</button>
+  <button class="tab-btn" data-tab="lernen">Lernen</button>
+  <button class="tab-btn" data-tab="quiz">Quiz</button>
+  <button class="tab-btn" data-tab="merkhilfe">Merkhilfe</button>
+</nav>
+
+<section id="tab-start" class="grid-3">
+  <div class="card"><h2>Das trainierst du</h2><div class="airy"><p>Trainiert werden das Anwenden der Formel und das sichere Nutzen von Einheiten.</p><p>Hinzu kommen das Deuten des Einflusses von Frequenz und Kapazität sowie das Formulieren fachsprachlich passender Aussagen zum Verhalten eines Kondensators im Wechselstromkreis.</p></div></div>
+  <div class="card"><h2>Unterrichtsbezug</h2><div class="airy"><p>Die App eignet sich für den Physikunterricht, für physikalisch-technische Lernkontexte und für die Klausurvorbereitung.</p><p>Sie ist so aufgebaut, dass nicht nur gerechnet, sondern auch erklärt, gedeutet und beurteilt wird.</p></div></div>
+  <div class="card"><h2>Lernlogik</h2><div class="airy"><p>Die Bereiche Start, Lernen, Quiz und Merkhilfe können nacheinander oder flexibel genutzt werden.</p><p>Dadurch eignet sich die App auch für differenzierte Lernwege und für sprachsensibles Arbeiten im Fachunterricht.</p></div></div>
+  <div class="button-row" style="grid-column:1/-1"><button class="btn-primary" id="goLearn">Mit Lernen starten</button><button class="btn-secondary" id="goQuiz">Direkt zum Quiz</button></div>
+</section>
+
+<section id="tab-lernen" class="stack hidden">
+  <div class="grid-3">
+    <div class="card"><h2>Grundidee</h2><div class="airy"><p>Der kapazitive Blindwiderstand beschreibt, wie stark ein Kondensator den Wechselstromfluss beeinflusst.</p><p>Seine Größe hängt von der Frequenz der anliegenden Wechselspannung und von der Kapazität des Kondensators ab.</p><p>Der kapazitive Blindwiderstand ist umso größer, je kleiner die Kapazität und je kleiner die Frequenz sind.</p></div></div>
+    <div class="card"><h2>Formel</h2><div class="formula-box"><span>Xc =</span><span class="fraction"><span class="top">1</span><span class="bar"></span><span class="bottom">2πfC</span></span></div><div class="formula-legend"><div>Xc in Ω</div><div>f in Hz</div><div>C in F</div></div><div class="formula-grid"><div class="formula-item"><span>Umgestellt nach der Frequenz:</span><span class="fraction"><span class="top">1</span><span class="bar"></span><span class="bottom">2πXcC</span></span><span>= f</span></div><div class="formula-item"><span>Umgestellt nach der Kapazität:</span><span class="fraction"><span class="top">1</span><span class="bar"></span><span class="bottom">2πXcf</span></span><span>= C</span></div></div></div>
+    <div class="card"><h2>Deutung</h2><div class="airy"><p>Eine größere Frequenz führt zu einem kleineren kapazitiven Blindwiderstand.</p><p>Auch eine größere Kapazität führt zu einem kleineren kapazitiven Blindwiderstand.</p><p>Bei kleinen Frequenzen ist der kapazitive Blindwiderstand entsprechend groß.</p></div></div>
+  </div>
+
+  <div class="card card-dashed">
+    <h2>Interaktives Diagramm: Xc als Funktion von f</h2>
+    <div class="airy"><p>Mit dem Schieberegler kann die Frequenz verändert werden.</p><p>So lässt sich beobachten, wie sich der Wert von Xc verändert und wie der Graph mit wachsender Frequenz abfällt.</p></div>
+    <div class="slider-wrap"><label for="freqSlider">Frequenz f: <strong id="freqValue">100 Hz</strong></label><input id="freqSlider" class="range-input" type="range" min="10" max="1000" step="10" value="100" /></div>
+    <div class="readout"><span>Abgelesener Wert:</span><strong id="xcValue">15,92 Ω</strong></div>
+    <div class="chart-frame"><p style="margin-top:0">Diagramm für C = 100 µF</p><svg id="xcChart" width="640" height="300" viewBox="0 0 640 300"></svg><p class="chart-caption">Der markierte Punkt gehört zur aktuell eingestellten Frequenz.</p></div>
+  </div>
+
+  <div class="card card-dashed"><h2>Fachlicher Kontext</h2><div class="airy"><p>In physikalisch-technischen Lernkontexten ist der kapazitive Blindwiderstand bedeutsam.</p><p>Das gilt besonders dann, wenn Wechselstromkreise untersucht, Messschaltungen ausgewertet oder Filterschaltungen verstanden werden.</p><p>Typisch sind Aufgaben, in denen Berechnung, Diagrammdeutung und fachsprachliche Erläuterung miteinander verbunden werden.</p></div></div>
+
+  <div class="card card-dashed"><h2>Zusammenhang von Kapazität, Aufladung und Stromfluss</h2><div class="airy"><p>Je kleiner die Kapazität eines Kondensators ist, desto schneller kann sich seine Spannung bei gleicher Ladungsänderung ändern.</p><p>In schulischen Deutungen wird das häufig so beschrieben, dass ein Kondensator mit kleiner Kapazität schneller aufgeladen ist.</p><p>Wird der Stromfluss dabei kleiner, ist das mit einem größeren kapazitiven Blindwiderstand vereinbar.</p></div></div>
+
+  <div class="card card-dashed">
+    <h2>Kapazitätseinheiten umrechnen</h2>
+    <div class="airy"><p>In der Praxis müssen Kapazitätswerte häufig zwischen mF, µF, nF und pF umgerechnet werden.</p><p>Mit der interaktiven Übung kann ein Wert eingegeben, eine Ziel-Einheit gewählt und die Umrechnung direkt kontrolliert werden.</p></div>
+    <div class="stack">
+      <div class="conversion-controls"><input id="capInput" class="field" type="text" value="1" /><select id="capFrom" class="select"><option value="mF">mF</option><option value="uF" selected>µF</option><option value="nF">nF</option><option value="pF">pF</option></select><div>→</div><select id="capTo" class="select"><option value="mF">mF</option><option value="uF">µF</option><option value="nF" selected>nF</option><option value="pF">pF</option></select></div>
+      <div class="button-row"><button class="btn-primary" id="convertCapButton" type="button">Umrechnen</button><button class="btn-secondary" id="newCapTaskButton" type="button">Neue Übung</button></div>
+      <div class="result-box" id="capResult">Ergebnis erscheint hier.</div>
+      <div class="airy"><p>Zusätzliche Übung: Gib das Ergebnis selbst ein und prüfe deine Lösung.</p></div>
+      <div class="conversion-controls"><div class="result-box" id="capTaskText">Rechne 1 µF in nF um.</div><input id="capTaskAnswer" class="field" type="text" placeholder="Ergebnis eingeben" /><div>→</div><div class="result-box" id="capTaskUnit">nF</div></div>
+      <div class="button-row"><button class="btn-primary" id="checkCapTaskButton" type="button">Lösung prüfen</button></div>
+      <div class="result-box" id="capTaskFeedback">Rückmeldung erscheint hier.</div>
+    </div>
+  </div>
+</section>
+
+<section id="tab-quiz" class="stack hidden">
+  <div id="quizArea" class="stack">
+    <div class="progress-top"><div id="progressText">Aufgabe 1 von 1</div><div id="progressPercent">0 % erledigt</div></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="card">
+      <div class="badge-row"><span class="badge" id="questionLevel"></span><span class="badge secondary" id="questionOperator"></span></div>
+      <h2 class="question-title" id="questionPrompt"></h2>
+      <div class="options" id="optionsWrap"></div>
+      <div class="answer-wrap hidden" id="answerWrap"><input class="answer-input" id="answerInput" placeholder="Ergebnis eingeben" /><div style="color:var(--muted)">Als Dezimaltrennzeichen kann ein Punkt oder ein Komma verwendet werden.</div></div>
+      <div class="feedback hidden" id="feedbackBox"><div><strong id="feedbackTitle"></strong></div><div id="feedbackDetail"></div><div id="feedbackExplanation"></div></div>
+      <div class="button-row"><button class="btn-primary" id="checkButton">Antwort prüfen</button><button class="btn-secondary" id="restartButton">Neu beginnen</button></div>
+    </div>
+  </div>
+  <div id="summaryArea" class="stack hidden">
+    <div class="card"><h2>Auswertung</h2><div class="grid-3"><div class="card"><div class="score-label">Punkte</div><div class="score-value" id="summaryPoints"></div></div><div class="card"><div class="score-label">Quote</div><div class="score-value" id="summaryPercent"></div></div><div class="card"><div class="score-label">Rückmeldung</div><div class="score-value" id="summaryFeedback"></div></div></div></div>
+    <div class="card card-dashed"><h2>Das sollte sicher beherrscht werden</h2><div class="airy"><p>• die Formel sicher anwenden</p><p>• den Einfluss von Frequenz und Kapazität fachlich passend begründen</p><p>• Einheiten korrekt angeben</p><p>• Aussagen zum Stromfluss und zum Verhalten des Kondensators fachlich präzise deuten</p></div></div>
+    <div class="button-row"><button class="btn-primary" id="viewScoreButton">View Score</button><button class="btn-secondary" id="newRoundButton">Neuer Durchgang</button><button class="btn-secondary" id="toMerkhilfeButton">Zur Merkhilfe</button></div>
+  </div>
+</section>
+
+<section id="tab-merkhilfe" class="stack hidden">
+  <div class="grid-2"><div class="card"><h2>Merksätze</h2><div class="airy"><p>• Der kapazitive Blindwiderstand wird von der Kapazität des Kondensators und von der Frequenz der anliegenden Wechselspannung beeinflusst.</p><p>• Je kleiner die Frequenz ist, desto größer ist der kapazitive Blindwiderstand.</p><p>• Je kleiner die Kapazität ist, desto größer ist der kapazitive Blindwiderstand.</p><p>• Eine kleine Kapazität kann mit einer schnelleren Spannungsänderung am Kondensator verbunden sein.</p><p>• Wenn der Stromfluss kleiner ist, ist der kapazitive Blindwiderstand größer.</p><p>• Xc wird in Ohm angegeben.</p></div></div><div class="card"><h2>Typische Fehler</h2><div class="airy"><p>• µF nicht in F umrechnen</p><p>• Xc mit anderen physikalischen Größen verwechseln</p><p>• steigende Frequenz falsch deuten</p><p>• Ergebnisse ohne Einheit angeben</p></div></div></div>
+</section>
+
+</div></div>
+
+<script>
+function shuffleArray(array){const copy=[...array];for(let i=copy.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]];}return copy;}
+function randomFrom(list){return list[Math.floor(Math.random()*list.length)];}
+function formatNumber(value,digits=2){return new Intl.NumberFormat('de-DE',{maximumFractionDigits:digits}).format(value);}
+function calcXc(frequency,capacitanceMicroFarad){return 1/(2*Math.PI*frequency*(capacitanceMicroFarad*1e-6));}
+function buildQuestions(){
+  const calcTemplates=[{f:randomFrom([50,100,200,500]),c:randomFrom([10,22,47,100])},{f:randomFrom([500,1000,2000,5000]),c:randomFrom([1,2.2,4.7,10])},{f:randomFrom([50,150,300,600]),c:randomFrom([22,33,68,100])},{f:randomFrom([800,1200,2500,4000]),c:randomFrom([0.47,1,2.2,4.7])}];
+  const calcQs=calcTemplates.map((item,idx)=>{const value=calcXc(item.f,item.c);return{id:`calc-${idx}`,type:'calc',level:idx<2?'Rechnen':'Vertiefung',operator:'berechnen',prompt:`Berechne Xc für f = ${formatNumber(item.f,0)} Hz und C = ${String(item.c).replace('.',',')} µF.`,correctValue:value,tolerance:Math.max(0.25,value*0.03),unit:'Ω',explanation:`Es gilt Xc = 1 / (2πfC). Mit f = ${formatNumber(item.f,0)} Hz und C = ${String(item.c).replace('.',',')} µF ergibt sich Xc ≈ ${formatNumber(value)} Ω.`};});
+  const base=[
+    {id:'mc-1',type:'mc',level:'Grundlage',operator:'benennen',prompt:'Wie lautet die Formel für den kapazitiven Blindwiderstand?',options:shuffleArray(['Xc = 2πfC','Xc = 1 / (2πfC)','Xc = R / C','Xc = 2πC / f']),answer:'Xc = 1 / (2πfC)',explanation:'Der kapazitive Blindwiderstand ist umgekehrt proportional zur Frequenz f und zur Kapazität C.'},
+    {id:'mc-2',type:'mc',level:'Grundlage',operator:'benennen',prompt:'Welche Einheit hat der kapazitive Blindwiderstand?',options:shuffleArray(['Farad','Henry','Ohm','Volt']),answer:'Ohm',explanation:'Der kapazitive Blindwiderstand wird in Ohm angegeben.'},
+    {id:'mc-3',type:'mc',level:'Verstehen',operator:'deuten',prompt:'Was passiert mit dem kapazitiven Blindwiderstand, wenn die Frequenz steigt?',options:shuffleArray(['Er steigt','Er sinkt','Er bleibt konstant','Er hängt dann nicht mehr von C ab']),answer:'Er sinkt',explanation:'Da Xc = 1 / (2πfC) gilt, wird Xc kleiner, wenn die Frequenz größer wird.'},
+    {id:'mc-4',type:'mc',level:'Verstehen',operator:'deuten',prompt:'Was passiert mit Xc, wenn die Kapazität verdoppelt wird?',options:shuffleArray(['Xc verdoppelt sich','Xc halbiert sich','Xc bleibt gleich','Xc wird null']),answer:'Xc halbiert sich',explanation:'Eine größere Kapazität führt zu einem kleineren Wert von Xc.'},
+    {id:'mc-5',type:'mc',level:'Klausurtraining',operator:'erläutern',prompt:'Welche Aussage ist fachlich richtig?',options:shuffleArray(['Ein Kondensator sperrt Wechselstrom grundsätzlich vollständig.','Ein Kondensator lässt hohe Frequenzen leichter passieren als niedrige.','Ein Kondensator hat nur bei Gleichstrom einen Blindwiderstand.','Der kapazitive Blindwiderstand wächst mit steigender Frequenz.']),answer:'Ein Kondensator lässt hohe Frequenzen leichter passieren als niedrige.',explanation:'Bei hoher Frequenz ist Xc klein. Dadurch wird der Wechselstromfluss weniger stark begrenzt.'},
+    {id:'mc-6',type:'mc',level:'PTA-Kontext',operator:'begründen',prompt:'Warum ist der kapazitive Blindwiderstand in Mess- und Filterschaltungen wichtig?',options:shuffleArray(['Weil der Kondensator jede Spannung verstärkt.','Weil frequenzabhängiges Verhalten gezielt genutzt werden kann.','Weil der Kondensator immer wie ein Schalter arbeitet.','Weil Gleichstrom grundsätzlich in Wärme umgewandelt wird.']),answer:'Weil frequenzabhängiges Verhalten gezielt genutzt werden kann.',explanation:'Kondensatoren spielen in Filterschaltungen und Messschaltungen eine wichtige Rolle, weil ihr Verhalten von der Frequenz abhängt.'},
+    {id:'mc-7',type:'mc',level:'Diagrammdenken',operator:'deuten',prompt:'Wie verläuft der Graph von Xc in Abhängigkeit von der Frequenz?',options:shuffleArray(['Linear steigend','Linear fallend','Hyperbolisch fallend','Konstant']),answer:'Hyperbolisch fallend',explanation:'Da Xc umgekehrt proportional zur Frequenz ist, ergibt sich ein hyperbolisch fallender Graph.'},
+    {id:'mc-8',type:'mc',level:'Klausurtraining',operator:'beurteilen',prompt:'Ein Kondensator wird mit sehr kleiner Frequenz betrieben. Welche Beobachtung ist am plausibelsten?',options:shuffleArray(['Der Strom ist groß, weil Xc klein ist.','Der Strom ist klein, weil Xc groß ist.','Die Frequenz hat keinen Einfluss auf den Strom.','Der Kondensator wirkt wie eine ideale Spannungsquelle.']),answer:'Der Strom ist klein, weil Xc groß ist.',explanation:'Bei kleiner Frequenz ist Xc groß. Dadurch wird der Stromfluss stärker begrenzt.'},
+    {id:'mc-9',type:'mc',level:'Transfer',operator:'vergleichen',prompt:'Zwei Kondensatoren werden bei gleicher Frequenz betrieben. Welcher hat den kleineren Blindwiderstand?',options:shuffleArray(['Der mit der kleineren Kapazität','Der mit der größeren Kapazität','Beide haben immer denselben Blindwiderstand','Das hängt nur von der Spannung ab']),answer:'Der mit der größeren Kapazität',explanation:'Je größer die Kapazität ist, desto kleiner ist Xc.'}
+  ];
+  return shuffleArray([...base,...calcQs]);
+}
+const state={tab:'start',questions:[],index:0,selected:'',inputValue:'',checked:false,isCorrect:false,score:0,showSummary:false};
+const tabs=document.querySelectorAll('.tab-btn');
+const sections={start:document.getElementById('tab-start'),lernen:document.getElementById('tab-lernen'),quiz:document.getElementById('tab-quiz'),merkhilfe:document.getElementById('tab-merkhilfe')};
+function showTab(tab){state.tab=tab;tabs.forEach(btn=>btn.classList.toggle('active',btn.dataset.tab===tab));Object.entries(sections).forEach(([k,el])=>el.classList.toggle('hidden',k!==tab));if(tab==='quiz') renderQuiz();}
+tabs.forEach(btn=>btn.addEventListener('click',()=>showTab(btn.dataset.tab)));
+document.getElementById('goLearn').addEventListener('click',()=>showTab('lernen'));
+document.getElementById('goQuiz').addEventListener('click',()=>showTab('quiz'));
+function updateScoreCard(){document.getElementById('scoreValue').textContent=`${state.score} / ${state.questions.length}`;const percent=Math.round((state.score/state.questions.length)*100);document.getElementById('scoreNote').textContent=state.showSummary?`${percent} % erreicht`:'Lernen und Quiz können miteinander verbunden werden.';}
+function currentQuestion(){return state.questions[state.index];}
+function renderQuiz(){const q=currentQuestion();document.getElementById('quizArea').classList.toggle('hidden',state.showSummary);document.getElementById('summaryArea').classList.toggle('hidden',!state.showSummary);if(state.showSummary){const percent=Math.round((state.score/state.questions.length)*100);document.getElementById('summaryPoints').textContent=`${state.score} / ${state.questions.length}`;document.getElementById('summaryPercent').textContent=`${percent} %`;document.getElementById('summaryFeedback').textContent=percent>=85?'Sehr sicher':percent>=65?'Solide':'Weiter üben';updateScoreCard();return;}const progress=(state.index/state.questions.length)*100;document.getElementById('progressText').textContent=`Aufgabe ${state.index+1} von ${state.questions.length}`;document.getElementById('progressPercent').textContent=`${Math.round(progress)} % erledigt`;document.getElementById('progressFill').style.width=`${progress}%`;document.getElementById('questionLevel').textContent=q.level;document.getElementById('questionOperator').textContent=`Operator: ${q.operator}`;document.getElementById('questionPrompt').textContent=q.prompt;const optionsWrap=document.getElementById('optionsWrap');const answerWrap=document.getElementById('answerWrap');const answerInput=document.getElementById('answerInput');const feedback=document.getElementById('feedbackBox');const feedbackTitle=document.getElementById('feedbackTitle');const feedbackDetail=document.getElementById('feedbackDetail');const feedbackExplanation=document.getElementById('feedbackExplanation');const checkButton=document.getElementById('checkButton');optionsWrap.innerHTML='';feedback.className='feedback hidden';feedbackTitle.textContent='';feedbackDetail.textContent='';feedbackExplanation.textContent='';if(q.type==='mc'){optionsWrap.classList.remove('hidden');answerWrap.classList.add('hidden');q.options.forEach(option=>{const btn=document.createElement('button');btn.type='button';btn.className='option';btn.textContent=option;if(state.selected===option) btn.classList.add('active');if(state.checked && option===q.answer) btn.classList.add('correct');if(state.checked && state.selected===option && option!==q.answer) btn.classList.add('wrong');btn.addEventListener('click',()=>{if(state.checked) return;state.selected=option;renderQuiz();});optionsWrap.appendChild(btn);});checkButton.disabled=!state.selected;}else{optionsWrap.classList.add('hidden');answerWrap.classList.remove('hidden');answerInput.value=state.inputValue;answerInput.placeholder=`Ergebnis in ${q.unit} eingeben`;checkButton.disabled=!String(state.inputValue).trim();}if(state.checked){feedback.classList.remove('hidden');feedback.classList.add(state.isCorrect?'feedback-success':'feedback-error');feedbackTitle.textContent=state.isCorrect?'Das ist richtig.':'Diese Antwort ist noch nicht richtig.';if(!state.isCorrect && q.type==='mc') feedbackDetail.innerHTML=`Richtige Antwort: <strong>${q.answer}</strong>`;if(!state.isCorrect && q.type==='calc') feedbackDetail.innerHTML=`Richtiger Wert: <strong>${formatNumber(q.correctValue)} ${q.unit}</strong>`;feedbackExplanation.textContent=q.explanation;checkButton.textContent=state.index<state.questions.length-1?'Nächste Aufgabe':'Auswertung anzeigen';}else{checkButton.textContent='Antwort prüfen';}updateScoreCard();}
+function checkOrNext(){const q=currentQuestion();if(state.checked){if(state.index<state.questions.length-1){state.index++;state.selected='';state.inputValue='';state.checked=false;state.isCorrect=false;}else{state.showSummary=true;}renderQuiz();return;}let correct=false;if(q.type==='mc'){correct=state.selected===q.answer;}else{const numeric=parseFloat(String(state.inputValue).replace(',', '.'));correct=!Number.isNaN(numeric)&&Math.abs(numeric-q.correctValue)<=q.tolerance;}state.checked=true;state.isCorrect=correct;if(correct) state.score++;renderQuiz();}
+function restartQuiz(){state.questions=buildQuestions();state.index=0;state.selected='';state.inputValue='';state.checked=false;state.isCorrect=false;state.score=0;state.showSummary=false;renderQuiz();}
+document.getElementById('checkButton').addEventListener('click',checkOrNext);
+document.getElementById('restartButton').addEventListener('click',restartQuiz);
+document.getElementById('newRoundButton').addEventListener('click',()=>{restartQuiz();showTab('quiz');});
+document.getElementById('toMerkhilfeButton').addEventListener('click',()=>showTab('merkhilfe'));
+document.getElementById('viewScoreButton').addEventListener('click',()=>{const percent=Math.round((state.score/state.questions.length)*100);alert(`Erfolgsquote: ${percent} %\nGesamtscore: ${state.score} von ${state.questions.length} Punkten`);});
+document.getElementById('answerInput').addEventListener('input',e=>{state.inputValue=e.target.value;if(!state.checked) renderQuiz();});
+function drawChart(){const freq=Number(document.getElementById('freqSlider').value);const c=100;const svg=document.getElementById('xcChart');const width=640,height=300,margin={top:20,right:20,bottom:42,left:64};const plotW=width-margin.left-margin.right,plotH=height-margin.top-margin.bottom;const minF=10,maxF=1000,maxX=calcXc(minF,c);const xs=f=>margin.left+((f-minF)/(maxF-minF))*plotW;const ys=x=>margin.top+plotH-(x/maxX)*plotH;let path='';for(let f=minF;f<=maxF;f+=5){const x=xs(f),y=ys(calcXc(f,c));path+=f===minF?`M ${x} ${y}`:` L ${x} ${y}`;}const cx=xs(freq),cy=ys(calcXc(freq,c)),current=calcXc(freq,c);svg.innerHTML=`<rect x="0" y="0" width="${width}" height="${height}" fill="white"></rect><line x1="${margin.left}" y1="${margin.top+plotH}" x2="${margin.left+plotW}" y2="${margin.top+plotH}" stroke="#64748b" stroke-width="1.5"></line><line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${margin.top+plotH}" stroke="#64748b" stroke-width="1.5"></line><text x="${margin.left+plotW/2}" y="${height-10}" text-anchor="middle" font-size="14" fill="#334155">Frequenz f in Hz</text><text x="18" y="${margin.top+plotH/2}" text-anchor="middle" font-size="14" fill="#334155" transform="rotate(-90 18 ${margin.top+plotH/2})">Xc in Ω</text><path d="${path}" fill="none" stroke="#0f766e" stroke-width="3"></path><line x1="${cx}" y1="${margin.top+plotH}" x2="${cx}" y2="${cy}" stroke="#94a3b8" stroke-dasharray="4 4"></line><line x1="${margin.left}" y1="${cy}" x2="${cx}" y2="${cy}" stroke="#94a3b8" stroke-dasharray="4 4"></line><circle cx="${cx}" cy="${cy}" r="6" fill="#1d4ed8"></circle>`;document.getElementById('freqValue').textContent=`${freq} Hz`;document.getElementById('xcValue').textContent=`${formatNumber(current)} Ω`;}
+document.getElementById('freqSlider').addEventListener('input',drawChart);
+const capFactors={mF:1e-3,uF:1e-6,nF:1e-9,pF:1e-12};
+function parseGerman(value){const n=parseFloat(String(value).trim().replace(',', '.'));return Number.isNaN(n)?null:n;}
+function labelUnit(u){return {mF:'mF',uF:'µF',nF:'nF',pF:'pF'}[u];}
+function convertCap(value,from,to){const valueF=value*capFactors[from];return valueF/capFactors[to];}
+function runConversion(){const value=parseGerman(document.getElementById('capInput').value);const from=document.getElementById('capFrom').value;const to=document.getElementById('capTo').value;const box=document.getElementById('capResult');if(value===null){box.textContent='Bitte zuerst einen gültigen Zahlenwert eingeben.';return;}const result=convertCap(value,from,to);box.innerHTML=`<strong>${formatNumber(value,6)} ${labelUnit(from)}</strong> entsprechen <strong>${formatNumber(result,6)} ${labelUnit(to)}</strong>.`;}
+document.getElementById('convertCapButton').addEventListener('click',runConversion);
+const taskPool=[{value:1,from:'uF',to:'nF'},{value:4.7,from:'nF',to:'pF'},{value:2.2,from:'mF',to:'uF'},{value:330,from:'pF',to:'nF'},{value:0.1,from:'uF',to:'nF'},{value:560,from:'nF',to:'uF'},{value:3.3,from:'uF',to:'pF'},{value:8200,from:'pF',to:'nF'}];
+let currentTask=null;
+function newCapTask(){currentTask=taskPool[Math.floor(Math.random()*taskPool.length)];document.getElementById('capTaskText').textContent=`Rechne ${formatNumber(currentTask.value,6)} ${labelUnit(currentTask.from)} in ${labelUnit(currentTask.to)} um.`;document.getElementById('capTaskUnit').textContent=labelUnit(currentTask.to);document.getElementById('capTaskAnswer').value='';const feedback=document.getElementById('capTaskFeedback');feedback.className='result-box';feedback.textContent='Rückmeldung erscheint hier.';}
+function checkCapTask(){if(!currentTask) return;const answer=parseGerman(document.getElementById('capTaskAnswer').value);const feedback=document.getElementById('capTaskFeedback');const correct=convertCap(currentTask.value,currentTask.from,currentTask.to);if(answer===null){feedback.className='result-box feedback-error';feedback.textContent='Bitte einen gültigen Zahlenwert eingeben.';return;}const tolerance=Math.max(Math.abs(correct)*1e-6,1e-9);if(Math.abs(answer-correct)<=tolerance){feedback.className='result-box feedback-success';feedback.innerHTML=`Das ist richtig. <strong>${formatNumber(correct,6)} ${labelUnit(currentTask.to)}</strong> ist korrekt.`;}else{feedback.className='result-box feedback-error';feedback.innerHTML=`Diese Antwort ist noch nicht richtig. Richtig ist: <strong>${formatNumber(correct,6)} ${labelUnit(currentTask.to)}</strong>.`;}}
+document.getElementById('newCapTaskButton').addEventListener('click',newCapTask);
+document.getElementById('checkCapTaskButton').addEventListener('click',checkCapTask);
+restartQuiz();drawChart();runConversion();newCapTask();showTab('start');
+</script>
+</body>
+</html>
